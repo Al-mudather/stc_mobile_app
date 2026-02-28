@@ -13,10 +13,9 @@ class OfflineCoursesController extends GetxController {
   List<OfflineCourseModel> _courses = [];
   List<OfflineCourseModel> get courses => _courses;
 
-  Future<void> _casheCourses() async {
+  Future<void> _cacheCourses() async {
     final allCourses = await getAllCoursesWithDetails();
     _courses = allCourses;
-
     update();
   }
 
@@ -343,57 +342,18 @@ class OfflineCoursesController extends GetxController {
         .query(offlineUnitTable, where: 'courseId = ?', whereArgs: [courseId]);
 
     if (courseUnits.isNotEmpty) return; // Course still contains other units
-    LOG_THE_DEBUG_DATA(messag: 'courseUnits => ${courseUnits}');
 
-    LOG_THE_DEBUG_DATA(messag: 'courseId => ${courseId}');
     try {
       // Delete the empty course
       await db
           .delete(offlineCourseTable, where: 'pk = ?', whereArgs: [courseId]);
-      // Now remove the course from the in-memory list.
-      _courses.removeWhere((course) => course.id == courseId);
-      _courses = [];
-      // Notify any listeners that the courses list has changed.
+      // Remove the course from the in-memory cache
+      _courses.removeWhere((course) => course.pk == courseId);
     } catch (e) {
       LOG_THE_DEBUG_DATA(messag: 'e => ${e}', type: 'e');
     }
 
     update();
-  }
-
-  Future<void> removeVideoV1({required int videoId}) async {
-    final db = _getDatabaseOrThrow();
-
-    // 1) Remove the specified video
-    await db.delete(offlineVideoTable, where: 'pk = ?', whereArgs: [videoId]);
-
-    // Check which unit this video belonged to
-    List<Map> result = await db.query(offlineVideoTable,
-        columns: ['unitId'], where: 'pk = ?', whereArgs: [videoId]);
-    if (result.isEmpty) return; // No video found, or it's already deleted.
-    int unitId = result.first['unitId'];
-
-    // 2) Check if the unit is now empty
-    result = await db.query(offlineVideoTable,
-        columns: ['pk'], where: 'unitId = ?', whereArgs: [unitId]);
-    if (result.isNotEmpty) return; // There are still other videos in the unit
-
-    // 3) If the unit is empty, delete it
-    await db.delete(offlineUnitTable, where: 'pk = ?', whereArgs: [unitId]);
-
-    // Check which course this unit belonged to
-    result = await db.query(offlineUnitTable,
-        columns: ['courseId'], where: 'pk = ?', whereArgs: [unitId]);
-    if (result.isEmpty) return; // No unit found, or it's already deleted.
-    int courseId = result.first['courseId'];
-
-    // 4) Check if there are any other units with the same course
-    result = await db.query(offlineUnitTable,
-        columns: ['pk'], where: 'courseId = ?', whereArgs: [courseId]);
-    if (result.isNotEmpty) return; // There are still other units in the course
-
-    // 5) If there are no units in the course, delete the course
-    await db.delete(offlineCourseTable, where: 'pk = ?', whereArgs: [courseId]);
   }
 
   Database _getDatabaseOrThrow() {
@@ -427,7 +387,7 @@ class OfflineCoursesController extends GetxController {
       //? Create the table for the videos
       await db.execute(createVideoTable);
       //todo: get all courses
-      await _casheCourses();
+      await _cacheCourses();
     } on MissingPlatformDirectoryException {
       throw UnableToGetDocumentsDirectoryException();
     } catch (e) {}

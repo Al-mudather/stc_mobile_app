@@ -12,8 +12,6 @@ import 'package:stc_training/routes/route_helper.dart';
 import 'package:stc_training/services/CRUD/offline_video_model.dart';
 import 'package:stc_training/utils/custom_btn_util.dart';
 import 'package:stc_training/utils/custom_text_util.dart';
-import 'package:path/path.dart' as Path;
-import 'package:dio/dio.dart';
 
 class OfflineChapterItemContentComp extends StatefulWidget {
   const OfflineChapterItemContentComp({super.key, required this.video});
@@ -27,17 +25,7 @@ class OfflineChapterItemContentComp extends StatefulWidget {
 
 class _OfflineChapterItemContentCompState
     extends State<OfflineChapterItemContentComp> {
-  bool downloading = false;
   bool fileExists = false;
-  double progress = 0;
-  String fileName = "";
-  String netWorkFilePath = "";
-  late String filePath;
-  late String fileUrl;
-  late CancelToken cancelToken;
-
-  late String videoUuid;
-  var getPathFile = DirectoryPath();
 
   final OfflineCoursesController offlineCoursectl =
       Get.find<OfflineCoursesController>();
@@ -45,44 +33,20 @@ class _OfflineChapterItemContentCompState
   @override
   void initState() {
     super.initState();
+    _checkFileExists();
   }
 
-  get videoDirectoryPath => () async {
-        //Todo: Get the dircetory path
-        String appDocPath =
-            await DirectoryPath().getApplicationDocumentsStoragePath();
-        return "$appDocPath/video";
-      };
-
-  DELETE_video_files_folder() async {
-    //Todo: Get the dircetory path
-    String appDocPath =
-        await DirectoryPath().getApplicationDocumentsStoragePath();
-    String dirPath = "$appDocPath/video/$videoUuid/";
-    final dir = Directory(dirPath);
-    if (dir.existsSync()) {
-      try {
-        dir.deleteSync(recursive: true);
-        setState(() {
-          fileExists = false;
-        });
-      } catch (e) {
-        LOG_THE_DEBUG_DATA(messag: e, type: 'e');
-      }
+  Future<void> _checkFileExists() async {
+    final storagePath = widget.video?.storagePath;
+    if (storagePath == null || storagePath.isEmpty) return;
+    final exists = await File(storagePath).exists();
+    if (mounted) {
+      setState(() => fileExists = exists);
     }
   }
 
-  PLAY_the_offline_video() async {
+  Future<void> _playOfflineVideo() async {
     try {
-      // LOG_THE_DEBUG_DATA(messag: e, type: 'e');
-      // String appDocPath =
-      //     await DirectoryPath().getApplicationDocumentsStoragePath();
-      // String dirPath =
-      //     "$appDocPath/video/${widget.video?.videoUuid}/playlist.m3u8";
-
-      // Get.toNamed(Routehelper.GoToOfflineVideoPlayerPage(
-      //     localVideoPath: widget.video?.storagePath ?? ''));
-
       Get.toNamed(Routehelper.GoToOfflineVideoPlayerPage(
           localVideoPath: widget.video?.storagePath ?? ''));
     } catch (e) {
@@ -90,12 +54,62 @@ class _OfflineChapterItemContentCompState
     }
   }
 
+  Future<void> _deleteVideo() async {
+    final videoUuid = widget.video?.videoUuid;
+    final videoPk = widget.video?.pk;
+
+    try {
+      if (videoPk != null) {
+        await offlineCoursectl.removeVideo(videoId: videoPk);
+      }
+
+      if (videoUuid != null && videoUuid.isNotEmpty) {
+        final appDocPath =
+            await DirectoryPath().getApplicationDocumentsStoragePath();
+        final dirPath = "$appDocPath/video/$videoUuid/";
+        final dir = Directory(dirPath);
+        if (dir.existsSync()) {
+          dir.deleteSync(recursive: true);
+        }
+      }
+
+      if (mounted) setState(() => fileExists = false);
+
+      SEND_a_message_to_the_user(
+        message: "Video deleted successfully",
+        messageLable: "Success",
+        backgroundColor: AppColors.successLight,
+      );
+    } catch (e) {
+      SEND_a_message_to_the_user(
+        message: "Could not delete the video: $e",
+        messageLable: "Error",
+        backgroundColor: AppColors.errorDark,
+      );
+    }
+  }
+
+  void _confirmDelete() {
+    Get.defaultDialog(
+      title: "Delete Video?",
+      middleText: "This will remove the downloaded video from your device.",
+      barrierDismissible: false,
+      textConfirm: "Delete",
+      textCancel: "Cancel",
+      confirmTextColor: Colors.white,
+      buttonColor: AppColors.errorDark,
+      onCancel: () {},
+      onConfirm: () async {
+        Get.back();
+        await _deleteVideo();
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        PLAY_the_offline_video();
-      },
+      onTap: fileExists ? _playOfflineVideo : null,
       child: Container(
         padding: const EdgeInsets.only(
           left: 16,
@@ -110,36 +124,39 @@ class _OfflineChapterItemContentCompState
                 BorderSide(color: AppColors.brown.withOpacity(0.5), width: 0.5),
           ),
         ),
-        child: Container(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SvgPicture.asset('assets/svgs/opened_lock.svg'),
-              const SizedBox(
-                width: 5,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SvgPicture.asset('assets/svgs/opened_lock.svg'),
+            const SizedBox(width: 5),
+            Expanded(
+              child: CustomTextUtil(
+                text1: "${widget.video?.title ?? ''}",
+                fontSize1: 14,
+                fontWeight1: FontWeight.w500,
               ),
-              Expanded(
-                child: CustomTextUtil(
-                  text1: "${widget.video?.title ?? ''}",
-                  fontSize1: 14,
-                  fontWeight1: FontWeight.w500,
-                ),
+            ),
+            const SizedBox(width: 5),
+            CustomBtnUtil(
+              btnTitle: "",
+              btnType: BtnTypes.filledIcon,
+              onClicked: () => _playOfflineVideo(),
+              icon: Icon(
+                Icons.play_arrow,
+                color: AppColors.successDark,
               ),
-              const SizedBox(
-                width: 5,
-              ),
+            ),
+            if (fileExists)
               CustomBtnUtil(
-                  btnTitle: "",
-                  btnType: BtnTypes.filledIcon,
-                  onClicked: () async {
-                    PLAY_the_offline_video;
-                  },
-                  icon: Icon(
-                    Icons.play_arrow,
-                    color: AppColors.successDark,
-                  )),
-            ],
-          ),
+                btnTitle: '',
+                btnType: BtnTypes.filledIcon,
+                icon: Icon(
+                  Icons.delete_forever,
+                  color: AppColors.errorDark,
+                ),
+                onClicked: _confirmDelete,
+              ),
+          ],
         ),
       ),
     );

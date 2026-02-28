@@ -38,10 +38,10 @@ class Routehelper {
   static const String myCoursesPage = '/my-courses-page';
   static String GoToCourseDetialsPage(
           {required String coursePk, required String courseId}) =>
-      '$courseDetailsPage?coursePk=$coursePk&&courseId=$courseId';
+      '$courseDetailsPage?coursePk=$coursePk&courseId=$courseId';
   static String GoToAllCoursesPage(
           {String? categoryPk, String? categoryName}) =>
-      '$allCoursesPage?categoryPk=$categoryPk&&categoryName=$categoryName';
+      '$allCoursesPage?categoryPk=$categoryPk&categoryName=$categoryName';
   static String GoToMyCoursesPage() => myCoursesPage;
 
   ///////////////////////////////////////////////
@@ -52,7 +52,7 @@ class Routehelper {
     required String coursePk,
     required String courseId,
   }) =>
-      '$classRoomPage?coursePk=$coursePk&&courseId=$courseId';
+      '$classRoomPage?coursePk=$coursePk&courseId=$courseId';
 
   ///////////////////////////////////////////////
   /// Offline Course class page
@@ -62,7 +62,7 @@ class Routehelper {
     required String coursePk,
     required String courseId,
   }) =>
-      '$offlineClassRoomPage?coursePk=$coursePk&&courseId=$courseId';
+      '$offlineClassRoomPage?coursePk=$coursePk&courseId=$courseId';
 
   ///////////////////////////////////////////////
   /// The Pdf Screen page
@@ -91,7 +91,7 @@ class Routehelper {
     required String unitContent,
     required String videoTitle,
   }) =>
-      '$classRoomVideoPlayerPage?unitContent=$unitContent&&videoTitle=$videoTitle';
+      '$classRoomVideoPlayerPage?unitContent=$unitContent&videoTitle=$videoTitle';
   ///////////////////////////////////////////////
   /// Offline Video Player page
   ///////////////////////////////////////////////
