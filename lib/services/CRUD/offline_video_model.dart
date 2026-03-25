@@ -1,14 +1,11 @@
-import 'package:flutter/material.dart';
 import 'package:stc_training/services/CRUD/offline_unit_model.dart';
 
-@immutable
 class OfflineVideoModel {
   int pk;
   String id;
   String title;
   String? videoUuid;
   String storagePath;
-  // DownloadStatus downloadStatus;
   int unitId;
 
   OfflineVideoModel({
@@ -17,7 +14,6 @@ class OfflineVideoModel {
     required this.title,
     this.videoUuid,
     required this.storagePath,
-    // required this.downloadStatus,
     required this.unitId,
   });
 
@@ -25,12 +21,8 @@ class OfflineVideoModel {
       : id = map[idColumn] as String,
         pk = map[pkColumn] as int,
         title = map[titleColumn] as String,
-        videoUuid = map[videoUuidColumn] as String,
+        videoUuid = map[videoUuidColumn] as String?,
         storagePath = map[storagePathColumn] as String,
-        // downloadStatus = map[downloadStatusColumn] as DownloadStatus;
-        // downloadStatus = DownloadStatus.values.firstWhere((e) =>
-        //     e.toString() ==
-        //     'DownloadStatus.' + (map['downloadStatusColumn'] as String)),
         unitId = map[unitIdColumn] as int;
 
   factory OfflineVideoModel.fromJson(Map<String, dynamic> json) {
@@ -73,6 +65,3 @@ const pkColumn = 'pk';
 const titleColumn = 'title';
 const videoUuidColumn = 'videoUuid';
 const storagePathColumn = 'storagePath';
-const downloadStatusColumn = 'downloadStatus';
-
-// enum DownloadStatus { Downloaded, Downloading, NotDownloaded }

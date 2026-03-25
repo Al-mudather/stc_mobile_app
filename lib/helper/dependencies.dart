@@ -7,6 +7,7 @@ import 'package:stc_training/features/course/controller/offline_courses_controll
 import 'package:stc_training/features/marketing/controller/marketing_controller.dart';
 import 'package:stc_training/features/settings/controller/drawer_layout_controller.dart';
 import 'package:stc_training/features/shopping/controller/shopping_cart_controller.dart';
+import 'package:stc_training/services/connectivity/connectivity_service.dart';
 
 Future<void> init() async {
   // - initialize the shared preferences storage
@@ -14,6 +15,7 @@ Future<void> init() async {
   // - load the shared preferences storage using getx
   Get.lazyPut(() => sharedPreferences, fenix: true);
   // Load the Auth Controller
+  Get.lazyPut(() => ConnectivityService(), fenix: true);
   Get.lazyPut(() => AuthController(appStorage: Get.find()), fenix: true);
   Get.lazyPut(() => AccountController(), fenix: true);
   Get.lazyPut(() => ClassRoomController(), fenix: true);

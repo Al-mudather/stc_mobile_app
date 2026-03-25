@@ -9,3 +9,9 @@ enum BtnTypes {
   gradientBtn,
   gradientBtnWithIcon,
 }
+
+enum DownloadStatus {
+  notDownloaded,
+  downloading,
+  downloaded,
+}
